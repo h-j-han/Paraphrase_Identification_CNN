@@ -16,9 +16,11 @@ function similarityMeasure.read_sentences(path, vocab)
   local line
   
   local fixed = true
+  local aa = 0
   while true do
     line = file:read()
     if line == nil then break end
+    aa = aa + 1
     local tokens = stringx.split(line)
     local len = #tokens
     local padLen = len
@@ -32,6 +34,8 @@ function similarityMeasure.read_sentences(path, vocab)
     end
     if fixed and len < 3 then
       for i = len+1, padLen do
+        --print(sent)
+        print(aa)
         sent[i] = vocab:index("unk") -- sent[len]
       end
     end
@@ -57,7 +61,14 @@ function similarityMeasure.read_relatedness_dataset(dir, vocab, task)
     if task == 'sic' then
     	dataset.labels[i] = 0.25 * (sim_file:readDouble() - 1) -- sic data
     elseif task == 'vid' then
-	dataset.labels[i] = 0.2 * (sim_file:readDouble()) -- vid data
+	    dataset.labels[i] = 0.2 * (sim_file:readDouble()) -- vid data
+    elseif task == 'vid2' then
+	    dataset.labels[i] = 0.2 * (sim_file:readDouble()) -- vid2 data
+    elseif task == 'msp' then
+        --print(dir)
+	    dataset.labels[i] =  (sim_file:readDouble()) -- msp data
+    elseif task == 'quo' then
+	    dataset.labels[i] = (sim_file:readDouble()) -- quora data
     else
     	dataset.labels[i] = (sim_file:readDouble()) -- twi and msp
     end

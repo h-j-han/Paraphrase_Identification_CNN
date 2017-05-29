@@ -71,7 +71,9 @@ end
 function Vocab:index(w)
   local index = self._index[w]
   if index == nil then
+    --print(w)
     if self.unk_index == nil then
+    --print(w)
       error('Token not in vocabulary and no UNK token defined: ' .. w)
     end
     return self.unk_index

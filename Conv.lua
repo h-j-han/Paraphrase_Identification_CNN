@@ -19,6 +19,10 @@ function Conv:__init(config)
     self.num_classes = 5
   elseif self.task == 'vid' then
     self.num_classes = 6
+  elseif self.task == 'msp' then
+    self.num_classes = 2
+  elseif self.task == 'quo' then
+    self.num_classes = 2
   else
     error("not possible task!")
   end
@@ -86,7 +90,7 @@ function Conv:trainCombineOnly(dataset)
     local targets = torch.zeros(batch_size, self.num_classes)
     for j = 1, batch_size do
       local sim  = -0.1
-      if self.task == 'sic' or self.task == 'vid' then
+      if self.task == 'sic' or self.task == 'vid' or self.task == 'vid2' or self.task=='msp' or self.task == 'quo' then
         sim = dataset.labels[indices[i + j - 1]] * (self.num_classes - 1) + 1
       elseif self.task == 'others' then
         sim = dataset.labels[indices[i + j - 1]] + 1 
@@ -143,6 +147,12 @@ function Conv:predictCombination(lsent, rsent)
     val = torch.range(1, 5, 1):dot(output:exp())
   elseif self.task == 'vid' then
     val = torch.range(0, 5, 1):dot(output:exp())
+  elseif self.task == 'vid2' then
+    val = torch.range(0, 5, 1):dot(output:exp())
+  elseif self.task == 'msp' then
+    val = torch.range(0, 1, 1):dot(output:exp())
+  elseif self.task == 'quo' then
+    val = torch.range(0, 1, 1):dot(output:exp())
   else
     error("not possible task")
   end
