@@ -141,6 +141,25 @@ for i = 1, num_epochs do
   local dev_predictions = model:predict_dataset(dev_dataset)
   local dev_score = pearson(dev_predictions, dev_dataset.labels)
   printf('-- score: %.5f\n', dev_score)
+
+-- add for saving result => test on dev set
+  if dev_score >= best_dev_score then
+    best_dev_score = dev_score
+    --local test_predictions = model:predict_dataset(test_dataset)
+    --local test_sco = pearson(test_predictions, test_dataset.labels)
+    local dev_sco=dev_score
+    printf('[[BEST DEV]]-- test score: %.4f\n', pearson(dev_predictions, dev_dataset.labels))
+
+    local predictions_save_path = string.format(
+  similarityMeasure.predictions_dir .. '/results-%s.%dl.%dd.epoch-%d.%.5f.%d.pred', args.model, args.layers, args.dim, i, dev_sco, id)
+    local predictions_file = torch.DiskFile(predictions_save_path, 'w')
+    print('writing predictions to ' .. predictions_save_path)
+    for i = 1, dev_predictions:size(1) do
+      predictions_file:writeFloat(dev_predictions[i])
+    end
+    predictions_file:close()
+  end
+---------------------------------------
 end
 print('finished training in ' .. (sys.clock() - train_start))
 
