@@ -42,6 +42,8 @@ Training script for semantic relatedness prediction on the SICK dataset.
   -b,--batch  (default 1)          Batch size
   -t,--task   (default vid2)       TaskD vid2 for msrvid2 and quo for QUORA
   -r,--thread (default 4)          number of torch.setnumthreads( )
+  -o,--option (default train)      train or test option
+  -x,--loadDir (default modelSTS) Loaded model for testing
 ]]
 -- layers : 1
 -- model : "dependency:
@@ -57,8 +59,8 @@ torch.seed()
 print('<torch> using the specified seed: ' .. torch.initialSeed())
 --local data_dir = 'data/msrvid2/' 
 local data_dir
-if args.task == 'vid2' then
-  data_dir = 'data/msrvid2/' 
+if args.task == 'vid' then
+  data_dir = 'data/msrvid/' 
 elseif args.task == 'quo' then
   data_dir = 'data/quora/' 
 else 
@@ -143,38 +145,64 @@ header('Training model')
 
 local id = 2007
 print("Id: " .. id)
-for i = 1, num_epochs do
-  local start = sys.clock()
-  print('--------------- EPOCH ' .. i .. '--- -------------')
-  model:trainCombineOnly(train_dataset)
-  print('Finished epoch in ' .. ( sys.clock() - start) )
+if args.option=='train' then
+  for i = 1, num_epochs do
+    local start = sys.clock()
+    print('--------------- EPOCH ' .. i .. '--- -------------')
+    model:trainCombineOnly(train_dataset)
+    print('Finished epoch in ' .. ( sys.clock() - start) )
 
-  local dev_predictions = model:predict_dataset(dev_dataset)
-  local dev_score = pearson(dev_predictions, dev_dataset.labels)
-  printf('-- dev score: %.5f\n', dev_score)
+    local dev_predictions = model:predict_dataset(dev_dataset)
+    local dev_score = pearson(dev_predictions, dev_dataset.labels)
+    printf('-- dev score: %.5f\n', dev_score)
 
-  --write prediction
-  if dev_score >= best_dev_score then
-    best_dev_score = dev_score
-    local test_predictions = model:predict_dataset(test_dataset)
-    local test_score = pearson(test_predictions, test_dataset.labels)
-    printf('[[BEST DEV]]-- dev score: %.4f\n [[ITS TEST]]-- test score: %.4f\n', dev_score,test_score)
+    --write prediction
+    if dev_score >= best_dev_score then
+      best_dev_score = dev_score
+      local test_predictions = model:predict_dataset(test_dataset)
+      local test_score = pearson(test_predictions, test_dataset.labels)
+      printf('[[BEST DEV]]-- dev score: %.4f\n [[ITS TEST]]-- test score: %.4f\n', dev_score,test_score)
 
-    local predictions_save_path = string.format(
-        similarityMeasure.predictions_dir .. '/%sresults-%s.%dl.%dd.epoch-%.2d.%.3f.%d.pred',taskD,args.model, args.layers, args.dim, i, dev_score, id)
-    local predictions_file = torch.DiskFile(predictions_save_path, 'w')
-    print('writing predictions to ' .. predictions_save_path)
-    for i = 1, test_predictions:size(1) do
-      predictions_file:writeFloat(test_predictions[i])
-      --if i%10 == 1 then
-          xlua.progress(i,test_predictions:size(1))
-      --end
+      local predictions_save_path = string.format(
+          similarityMeasure.predictions_dir .. '/%sresults-%s.%dl.%dd.epoch-%.2d.%.3f.%d.pred',taskD,args.model, args.layers, args.dim, i, dev_score, id)
+      local predictions_file = torch.DiskFile(predictions_save_path, 'w')
+      print('writing predictions to ' .. predictions_save_path)
+      for i = 1, test_predictions:size(1) do
+        predictions_file:writeFloat(test_predictions[i])
+        --if i%10 == 1 then
+            xlua.progress(i,test_predictions:size(1))
+        --end
+      end
+      predictions_file:close()
     end
-    predictions_file:close()
-  end
 
+  end
+  print('finished training in ' .. (sys.clock() - train_start))
+elseif args.option=='test' then
+  print('Test mode'..args.loadDir)
+  loadDir='model/'..args.loadDir..'.trained.th'
+  model = torch.load("model/modelSTS.trained.th", 'ascii')
+  model:print_config()
+  local test_predictions = model:predict_dataset(test_dataset)
+  local test_score = pearson(test_predictions, test_dataset.labels)
+  printf('-- score: %.5f\n', test_score)
+  
+  local predictions_save_path = string.format(
+      similarityMeasure.predictions_dir .. '/%sresults-%s.%dl.%dd.epoch-%.2d.%.3f.%d.pred',taskD,args.model, args.layers, args.dim, i, dev_score, id)
+  local predictions_file = torch.DiskFile(predictions_save_path, 'w')
+  print('writing predictions to ' .. predictions_save_path)
+  for i = 1, test_predictions:size(1) do
+    predictions_file:writeFloat(test_predictions[i])
+    --if i%10 == 1 then
+        xlua.progress(i,test_predictions:size(1))
+    --end
+  end
+  predictions_file:close()
+
+  
+else
+  print('Wrong option input')
 end
-print('finished training in ' .. (sys.clock() - train_start))
 
 
 
