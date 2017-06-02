@@ -19,6 +19,8 @@ function Conv:__init(config)
     self.num_classes = 5
   elseif self.task == 'vid' then
     self.num_classes = 6
+  elseif self.task == 'vid2' then
+    self.num_classes = 6
   elseif self.task == 'msp' then
     self.num_classes = 2
   elseif self.task == 'quo' then
@@ -81,9 +83,9 @@ function Conv:trainCombineOnly(dataset)
   local indices = torch.randperm(dataset.size)
   local zeros = torch.zeros(self.mem_dim)
   for i = 1, dataset.size, self.batch_size do
-    --if i%10 == 1 then
-    --	    xlua.progress(i, dataset.size)
-    --end
+    if i%10 == 1 then
+    	    xlua.progress(i, dataset.size)
+    end
 
     local batch_size = 1 --math.min(i + self.batch_size - 1, dataset.size) - i + 1
     -- get target distributions for batch
@@ -133,6 +135,7 @@ function Conv:trainCombineOnly(dataset)
     --train_looss = train_looss + fs[#fs]
   end
   print('Loss: ' .. train_looss)
+  --xlua.progress(i , dataset.size)
 end
 
 -- Predict the similarity of a sentence pair.
@@ -165,6 +168,9 @@ function Conv:predict_dataset(dataset)
   for i = 1, dataset.size do
     local lsent, rsent = dataset.lsents[i], dataset.rsents[i]
     predictions[i] = self:predictCombination(lsent, rsent)
+    if i%10 == 1 then
+        xlua.progress(i,dataset.size)
+    end
   end
   return predictions
 end
