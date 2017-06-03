@@ -43,7 +43,8 @@ Training script for semantic relatedness prediction on the SICK dataset.
   -t,--task   (default vid2)       TaskD vid2 for msrvid2 and quo for QUORA
   -r,--thread (default 4)          number of torch.setnumthreads( )
   -o,--option (default train)      train or test option
-  -x,--loadDir (default modelSTS) Loaded model for testing
+  -x,--loadDir (default modelSTS.trained.th)  Loaded model for testing
+  -s,--save (default false)        Save the train model
 ]]
 -- layers : 1
 -- model : "dependency:
@@ -159,7 +160,7 @@ if args.option=='train' then
     --write prediction
     if dev_score >= best_dev_score then
       best_dev_score = dev_score
-      local test_predictions = model:predict_dataset(test_dataset)
+      local test_predictions = dev_predictions--local test_predictions = model:predict_dataset(test_dataset)
       local test_score = pearson(test_predictions, test_dataset.labels)
       printf('[[BEST DEV]]-- dev score: %.4f\n [[ITS TEST]]-- test score: %.4f\n', dev_score,test_score)
 
@@ -175,20 +176,22 @@ if args.option=='train' then
       end
       predictions_file:close()
     end
-
+    if args.save then
+      model:save(string.format('./model/%smodel.epoch%d',taskD,i))
+    end
   end
   print('finished training in ' .. (sys.clock() - train_start))
 elseif args.option=='test' then
   print('Test mode'..args.loadDir)
-  loadDir='model/'..args.loadDir..'.trained.th'
-  model = torch.load("model/modelSTS.trained.th", 'ascii')
+  loadDir='model/'..args.loadDir
+  model = torch.load(loadDir, 'ascii')
   model:print_config()
   local test_predictions = model:predict_dataset(test_dataset)
   local test_score = pearson(test_predictions, test_dataset.labels)
   printf('-- score: %.5f\n', test_score)
   
   local predictions_save_path = string.format(
-      similarityMeasure.predictions_dir .. '/%sresults-%s.%dl.%dd.epoch-%.2d.%.3f.%d.pred',taskD,args.model, args.layers, args.dim, i, dev_score, id)
+      similarityMeasure.predictions_dir .. '/%sresults-%s.%dl.%dd.epoch-.%.3f.%d.pred',taskD,args.model, args.layers, args.dim, test_score, id)
   local predictions_file = torch.DiskFile(predictions_save_path, 'w')
   print('writing predictions to ' .. predictions_save_path)
   for i = 1, test_predictions:size(1) do
@@ -198,7 +201,7 @@ elseif args.option=='test' then
     --end
   end
   predictions_file:close()
-
+  
   
 else
   print('Wrong option input')
