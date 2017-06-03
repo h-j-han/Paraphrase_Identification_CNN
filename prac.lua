@@ -176,13 +176,14 @@ if args.option=='train' then
       end
       predictions_file:close()
     end
-    if args.save then
+    if args.save==true then
+      print('saving...')
       model:save(string.format('./model/%smodel.epoch%d',taskD,i))
     end
   end
   print('finished training in ' .. (sys.clock() - train_start))
 elseif args.option=='test' then
-  print('Test mode'..args.loadDir)
+  print('Test mode: '..args.loadDir)
   loadDir='model/'..args.loadDir
   model = torch.load(loadDir, 'ascii')
   model:print_config()

@@ -190,19 +190,5 @@ function Conv:print_config()
 end
 
 function Conv:save(path)
-  local config = {
-    batch_size    = self.batch_size,
-    emb_vecs      = self.emb_vecs:float(),
-    learning_rate = self.learning_rate,
-    num_layers    = self.num_layers,
-    mem_dim       = self.mem_dim,
-    sim_nhidden   = self.sim_nhidden,
-    reg           = self.reg,
-    structure     = self.structure,
-  }
-
-  torch.save(path, {
-    params = self.params,
-    config = config,
-  })
+  torch.save(path, self,'ascii')
 end
