@@ -164,7 +164,7 @@ if args.option=='train' then
       local test_score = pearson(test_predictions, test_dataset.labels)
       printf('[[BEST DEV]]-- dev score: %.4f\n [[ITS TEST]]-- test score: %.4f\n', dev_score,test_score)
 
-      local predictions_save_path = string.format(
+      --[[local predictions_save_path = string.format(
           similarityMeasure.predictions_dir .. '/%sresults-%s.%dl.%dd.epoch-%.2d.%.3f.%d.pred',taskD,args.model, args.layers, args.dim, i, dev_score, id)
       local predictions_file = torch.DiskFile(predictions_save_path, 'w')
       print('writing predictions to ' .. predictions_save_path)
@@ -174,12 +174,13 @@ if args.option=='train' then
             xlua.progress(i,test_predictions:size(1))
         --end
       end
-      predictions_file:close()
+      predictions_file:close()]]
+      if args.save==true then
+        print('saving...')
+        model:save(string.format('./model/%smodel.epoch%d',taskD,i))
+      end
     end
-    if args.save==true then
-      print('saving...')
-      model:save(string.format('./model/%smodel.epoch%d',taskD,i))
-    end
+    
   end
   print('finished training in ' .. (sys.clock() - train_start))
 elseif args.option=='test' then
