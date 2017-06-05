@@ -40,11 +40,11 @@ Training script for semantic relatedness prediction on the SICK dataset.
   -l,--layers (default 1)          Number of layers (ignored for Tree-LSTM)
   -d,--dim    (default 150)        LSTM memory dimension
   -b,--batch  (default 1)          Batch size
-  -t,--task   (default vid2)       TaskD vid2 for msrvid2 and quo for QUORA
+  -t,--task   (default vid)       TaskD vid2 for msrvid2 and quo for QUORA
   -r,--thread (default 4)          number of torch.setnumthreads( )
   -o,--option (default train)      train or test option
   -x,--loadDir (default modelSTS.trained.th)  Loaded model for testing
-  -s,--save (default false)        Save the train model
+  -s,--save (default true)        Save the train model
 ]]
 -- layers : 1
 -- model : "dependency:
@@ -68,7 +68,8 @@ else
   print('f\n')
 end
 
-vocab = similarityMeasure.Vocab(data_dir .. 'vocab-cased.txt')
+local vocab = similarityMeasure.Vocab(data_dir .. 'vocab-cased.txt')
+vocab:add_unk_token()
 print('loading word embeddings')
 
 local emb_dir = 'data/glove/'
@@ -163,7 +164,7 @@ if args.option=='train' then
       local test_predictions = dev_predictions--local test_predictions = model:predict_dataset(test_dataset)
       local test_score = pearson(test_predictions, test_dataset.labels)
       printf('[[BEST DEV]]-- dev score: %.4f\n [[ITS TEST]]-- test score: %.4f\n', dev_score,test_score)
-
+     --[[
       local predictions_save_path = string.format(
           similarityMeasure.predictions_dir .. '/%sresults-%s.%dl.%dd.epoch-%.2d.%.3f.%d.pred',taskD,args.model, args.layers, args.dim, i, dev_score, id)
       local predictions_file = torch.DiskFile(predictions_save_path, 'w')
@@ -175,13 +176,17 @@ if args.option=='train' then
         --end
       end
       predictions_file:close()
+      ]]
     end
-    if args.save==true then
+    
+    --if args.save==true then
       print('saving...')
       model:save(string.format('./model/%smodel.epoch%d',taskD,i))
-    end
+    --end
   end
   print('finished training in ' .. (sys.clock() - train_start))
+
+
 elseif args.option=='test' then
   print('Test mode: '..args.loadDir)
   loadDir='model/'..args.loadDir
