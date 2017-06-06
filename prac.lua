@@ -64,6 +64,8 @@ if args.task == 'vid' then
   data_dir = 'data/msrvid/' 
 elseif args.task == 'quo' then
   data_dir = 'data/quora/' 
+elseif args.task =='msp' then
+  data_dir='data/msrp/'
 else 
   print('f\n')
 end
@@ -97,7 +99,7 @@ print('unk count = ' .. num_unk)
 emb_vocab = nil
 emb_vecs = nil
 collectgarbage()
---local taskD = 'vid2'
+
 local taskD = args.task
 -- load datasets
 print('loading datasets')
@@ -178,11 +180,8 @@ if args.option=='train' then
       predictions_file:close()
       ]]
     end
-    
-    --if args.save==true then
       print('saving...')
       model:save(string.format('./model/%smodel.epoch%d',taskD,i))
-    --end
   end
   print('finished training in ' .. (sys.clock() - train_start))
 
