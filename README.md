@@ -1,3 +1,15 @@
+Running
+------------
+'''
+chmod +x quora_script_train.sh
+./quora_script_train.sh
+'''
+
+
+
+====================================================================================================
+
+
 # Multi-Perspective Convolutional Neural Networks for Modeling Textual Similarity
 
 This repo contains the Torch implementation of multi-perspective convolutional neural networks for modeling textual similarity, described in the following paper:
