@@ -35,7 +35,7 @@ function similarityMeasure.read_sentences(path, vocab)
     if fixed and len < 3 then
       for i = len+1, padLen do
         --print(sent)
-        print(aa)
+        --print(aa)
         sent[i] = vocab:index("unk") -- sent[len]
       end
     end
