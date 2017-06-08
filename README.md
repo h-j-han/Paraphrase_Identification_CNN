@@ -1,13 +1,13 @@
 Running
 ------------
-'''
+```
 chmod +x quora_script_train.sh
 ./quora_script_train.sh
-'''
+```
 
 
 
-====================================================================================================
+====================================================================
 
 
 # Multi-Perspective Convolutional Neural Networks for Modeling Textual Similarity
