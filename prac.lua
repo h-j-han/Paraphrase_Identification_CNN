@@ -41,7 +41,7 @@ Training script for semantic relatedness prediction on the SICK dataset.
   -d,--dim    (default 150)        LSTM memory dimension
   -b,--batch  (default 1)          Batch size
   -t,--task   (default vid)       TaskD vid2 for msrvid2 and quo for QUORA msp for MSRP
-  -r,--thread (default 30)          number of torch.setnumthreads( )
+  -r,--thread (default 4)          number of torch.setnumthreads( )
   -o,--option (default train)      train or test or dev option
   -x,--loadDir (default modelSTS.trained.th)  Loaded model for testing
   -f,--testf (default test)        choose test folder test_1 test_2 test_3 test_4
@@ -150,22 +150,25 @@ if args.option=='train' then
   printf('num dev   = %d\n', dev_dataset.size)
 
   for i = 1, num_epochs do
-    local start = sys.clock()
     print('--------------- EPOCH ' .. i .. '--- -------------')
+    local start = sys.clock()
     model:trainCombineOnly(train_dataset)
     print('Finished epoch in ' .. ( sys.clock() - start) )
 
     local start = sys.clock()
     local dev_predictions = model:predict_dataset(dev_dataset)
     local dev_score = pearson(dev_predictions, dev_dataset.labels)
-    printf('-- dev score: %.5f   time in %d%.1f \n', dev_score, sys.clock()-start)
+    print('finished prediction in ' .. (sys.clock() - start))
+    printf('-- dev score: %.5f\n', dev_score)
 
     if dev_score >= best_dev_score then
       best_dev_score = dev_score
       printf('[[BEST DEV]]-- dev score: %.4f\n', dev_score)
       --save model
       print('saving...')
+      local start = sys.clock()
       model:save(string.format('./model/%s.model.epoch%d.devscore%0.3f',taskD,i,dev_score))
+      print('finished saving in ' .. (sys.clock() - start))
     end
   end
   print('finished training in ' .. (sys.clock() - train_start))
@@ -180,12 +183,15 @@ elseif args.option=='test' then
   loadDir='model/'..args.loadDir
   model = torch.load(loadDir, 'ascii')
   model:print_config()
+  local start = sys.clock()
   local test_predictions = model:predict_dataset(test_dataset)
+  print('finished prediction in ' .. (sys.clock() - start))
   
   --write prediction
   local predictions_save_path = string.format(similarityMeasure.predictions_dir .. '/%s-results-%s.%dl.%dd.epoch-.%.3f.%d.pred',taskD,args.model, args.layers, args.dim, test_score, id)
   local predictions_file = torch.DiskFile(predictions_save_path, 'w')
   print('writing predictions to ' .. predictions_save_path)
+  local start = sys.clock()
   for i = 1, test_predictions:size(1) do
     predictions_file:writeFloat(test_predictions[i])
     --if i%10 == 1 then
@@ -193,6 +199,7 @@ elseif args.option=='test' then
     --end
   end
   predictions_file:close()
+  print('finished writing in ' .. (sys.clock() - start))
   
 elseif args.option=='dev' then
 
@@ -205,8 +212,10 @@ elseif args.option=='dev' then
   loadDir='model/'..args.loadDir
   model = torch.load(loadDir, 'ascii')
   model:print_config()
+  local start = sys.clock()
   local dev_predictions = model:predict_dataset(dev_dataset)
   local dev_score = pearson(dev_predictions, dev_dataset.labels)
+  print('finished prediction in ' .. (sys.clock() - start))
   printf('-- score: %.5f\n', dev_score)
 
 else
