@@ -194,9 +194,6 @@ elseif args.option=='test' then
   local start = sys.clock()
   for i = 1, test_predictions:size(1) do
     predictions_file:writeFloat(test_predictions[i])
-    --if i%10 == 1 then
-        xlua.progress(i,test_predictions:size(1))
-    --end
   end
   predictions_file:close()
   print('finished writing in ' .. (sys.clock() - start))

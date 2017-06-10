@@ -133,7 +133,7 @@ function Conv:trainCombineOnly(dataset)
     _, fs  = optim.sgd(feval, self.params, self.optim_state)
     --train_looss = train_looss + fs[#fs]
   end
-  print('Loss: ' .. train_looss)
+  print('Loss: ' .. train_looss..'\n')
   --xlua.progress(i , dataset.size)
 end
 
