@@ -188,7 +188,7 @@ elseif args.option=='test' then
   print('finished prediction in ' .. (sys.clock() - start))
   
   --write prediction
-  local predictions_save_path = string.format(similarityMeasure.predictions_dir .. '/%s-results-%s.%dl.%dd.epoch-.%.3f.%d.pred',taskD,args.model, args.layers, args.dim, test_score, id)
+  local predictions_save_path = string.format(similarityMeasure.predictions_dir .. '/%s-results-%s',taskD,args.loadDir)
   local predictions_file = torch.DiskFile(predictions_save_path, 'w')
   print('writing predictions to ' .. predictions_save_path)
   local start = sys.clock()
