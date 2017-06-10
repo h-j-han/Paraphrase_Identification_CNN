@@ -42,7 +42,7 @@ Training script for semantic relatedness prediction on the SICK dataset.
   -b,--batch  (default 1)          Batch size
   -t,--task   (default vid)       TaskD vid2 for msrvid2 and quo for QUORA msp for MSRP
   -r,--thread (default 4)          number of torch.setnumthreads( )
-  -o,--option (default train)      train or test option
+  -o,--option (default train)      train or test or dev option
   -x,--loadDir (default modelSTS.trained.th)  Loaded model for testing
   -f,--testf (default test)        choose test folder test_1 test_2 test_3 test_4
 ]]
@@ -102,16 +102,10 @@ collectgarbage()
 
 local taskD = args.task
 -- load datasets
-print('loading datasets')
 local train_dir = data_dir .. 'train/'
 local dev_dir = data_dir .. 'dev/'
 local test_dir = data_dir .. args.testf..'/'
-local train_dataset = similarityMeasure.read_relatedness_dataset(train_dir, vocab, taskD)
-local dev_dataset = similarityMeasure.read_relatedness_dataset(dev_dir, vocab, taskD)
-local test_dataset = similarityMeasure.read_test_dataset(test_dir, vocab, taskD)
-printf('num train = %d\n', train_dataset.size)
-printf('num dev   = %d\n', dev_dataset.size)
-printf('num test  = %d\n', test_dataset.size)
+
 
 -- initialize model -- Conv:__init(config)   
 local model = model_class{
@@ -131,25 +125,30 @@ header('model configuration')
 printf('max epochs = %d\n', num_epochs)
 model:print_config()
 
-
 if lfs.attributes(similarityMeasure.predictions_dir) == nil then
   lfs.mkdir(similarityMeasure.predictions_dir)
 end
-
--- train
-local train_start = sys.clock()
-local best_dev_score = -1.0
-local best_dev_model = model
 
 -- threads
 torch.setnumthreads(args.thread)
 print('<torch> number of threads in used: ' .. torch.getnumthreads())
 
-header('Training model')
 
 local id = 2007
 print("Id: " .. id)
+
 if args.option=='train' then
+  header('Training model')
+  local train_start = sys.clock()
+  local best_dev_score = -1.0
+  local best_dev_model = model
+
+  print('loading datasets')
+  local train_dataset = similarityMeasure.read_relatedness_dataset(train_dir, vocab, taskD)
+  printf('num train = %d\n', train_dataset.size)
+  local dev_dataset = similarityMeasure.read_relatedness_dataset(dev_dir, vocab, taskD)
+  printf('num dev   = %d\n', dev_dataset.size)
+
   for i = 1, num_epochs do
     local start = sys.clock()
     print('--------------- EPOCH ' .. i .. '--- -------------')
@@ -162,26 +161,25 @@ if args.option=='train' then
 
     if dev_score >= best_dev_score then
       best_dev_score = dev_score
-      --local test_predictions = dev_predictions--local test_predictions = model:predict_dataset(test_dataset)
-      --local test_score = pearson(test_predictions, test_dataset.labels)
-      --printf('[[BEST DEV]]-- dev score: %.4f\n [[ITS TEST]]-- test score: %.4f\n', dev_score,test_score)
       printf('[[BEST DEV]]-- dev score: %.4f\n', dev_score)
       --save model
       print('saving...')
-      model:save(string.format('./model/%smodel.epoch%d.devscore%0.3f',taskD,i,dev_score))
+      model:save(string.format('./model/%s.model.epoch%d.devscore%0.3f',taskD,i,dev_score))
     end
   end
   print('finished training in ' .. (sys.clock() - train_start))
 
 
 elseif args.option=='test' then
+
+  print('loading datasets')
+  local test_dataset = similarityMeasure.read_test_dataset(test_dir, vocab, taskD)
+  printf('num test  = %d\n', test_dataset.size)
   print('Test mode: '..args.loadDir)
   loadDir='model/'..args.loadDir
   model = torch.load(loadDir, 'ascii')
   model:print_config()
   local test_predictions = model:predict_dataset(test_dataset)
-  --local test_score = pearson(test_predictions, test_dataset.labels)
-  --printf('-- score: %.5f\n', test_score)
   
   --write prediction
   local predictions_save_path = string.format(similarityMeasure.predictions_dir .. '/%s-results-%s.%dl.%dd.epoch-.%.3f.%d.pred',taskD,args.model, args.layers, args.dim, test_score, id)
@@ -195,7 +193,21 @@ elseif args.option=='test' then
   end
   predictions_file:close()
   
-  
+elseif args.option=='dev' then
+
+  print('loading datasets')
+  local dev_dataset = similarityMeasure.read_relatedness_dataset(dev_dir, vocab, taskD)
+  printf('num dev   = %d\n', dev_dataset.size)
+
+  --evaluate the model with dev dataset
+  print('Dev mode: '..args.loadDir)
+  loadDir='model/'..args.loadDir
+  model = torch.load(loadDir, 'ascii')
+  model:print_config()
+  local dev_predictions = model:predict_dataset(dev_dataset)
+  local dev_score = pearson(dev_predictions, dev_dataset.labels)
+  printf('-- score: %.5f\n', dev_score)
+
 else
   print('Wrong option input')
 end

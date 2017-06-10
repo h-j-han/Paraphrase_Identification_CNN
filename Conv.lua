@@ -13,7 +13,6 @@ function Conv:__init(config)
   -- word embedding
   self.emb_vecs = config.emb_vecs
   self.emb_dim = config.emb_vecs:size(2)
-
   -- number of similarity rating classes
   if self.task == 'sic' then
     self.num_classes = 5
@@ -87,7 +86,7 @@ function Conv:trainCombineOnly(dataset)
     	    xlua.progress(i, dataset.size)
     end
 
-    local batch_size = 1 --math.min(i + self.batch_size - 1, dataset.size) - i + 1
+    local batch_size = math.min(i + self.batch_size - 1, dataset.size) - i + 1
     -- get target distributions for batch
     local targets = torch.zeros(batch_size, self.num_classes)
     for j = 1, batch_size do
@@ -117,8 +116,8 @@ function Conv:trainCombineOnly(dataset)
         local linputs = self.emb_vecs:index(1, lsent:long()):double()
         local rinputs = self.emb_vecs:index(1, rsent:long()):double()
     		
-   	local part2 = self.convModel:forward({linputs, rinputs})
-   	local output = self.softMaxC:forward(part2)
+   	    local part2 = self.convModel:forward({linputs, rinputs})
+   	    local output = self.softMaxC:forward(part2)
 
         loss = self.criterion:forward(output, targets[1])
         train_looss = loss + train_looss
@@ -166,7 +165,8 @@ end
 function Conv:predict_dataset(dataset)
   local predictions = torch.Tensor(dataset.size)
   for i = 1, dataset.size do
-    local lsent, rsent = dataset.lsents[i], dataset.rsents[i]
+    --local lsent, rsent = dataset.lsents[i], dataset.rsents[i]
+    lsent, rsent = dataset.lsents[i], dataset.rsents[i]
     predictions[i] = self:predictCombination(lsent, rsent)
     if i%10 == 1 then
         xlua.progress(i,dataset.size)
@@ -177,7 +177,7 @@ end
 
 function Conv:print_config()
   local num_params = self.params:nElement()
-
+  print('Vocab length: ' .. self.emb_vecs:size(1))
   print('num params: ' .. num_params)
   print('word vector dim: ' .. self.emb_dim)
   print('LSTM memory dim: ' .. self.mem_dim)
