@@ -9,6 +9,7 @@ function Conv:__init(config)
   self.structure     = config.structure     or 'lstm' -- {lstm, bilstm}
   self.sim_nhidden   = config.sim_nhidden   or 150
   self.task          = config.task          or 'sic'  -- or 'vid'
+  self.modelf        = config.modelf        or 'orig'  -- or 'vid'
 	
   -- word embedding
   self.emb_vecs = config.emb_vecs
@@ -35,7 +36,14 @@ function Conv:__init(config)
   self.criterion = nn.DistKLDivCriterion()
   
   ----------------------------------------Combination of ConvNets.
-  dofile 'models.lua'
+  --
+  if self.modelf == 'orig' then
+    dofile 'models.lua'
+  elseif self.modelf == 're' then
+    dofile 'models_re.lua'
+  else
+      error("select models.lua file for create model")
+  end
   print('<model> creating a fresh model')
   
   -- Type of model; Size of vocabulary; Number of output classes

@@ -46,6 +46,7 @@ Training script for semantic relatedness prediction on the SICK dataset.
   -o,--option (default train)      train or test or dev option
   -x,--loadDir (default modelSTS.trained.th)  Loaded model for testing
   -f,--testf (default test)        choose test folder test_1 test_2 test_3 test_4
+  -y,--modelf (default orig) choose models.lua file : 'orig' or  variation models_re.lua : 're'
 ]]
 -- layers : 1
 -- model : "dependency:
@@ -118,7 +119,9 @@ local model = model_class{
   mem_dim    = args.dim,
   num_layers = args.layers,
   task       = taskD,
-  batch_size = args.batch
+  batch_size = args.batch,
+  modelf     = args.modelf
+  
 }
 
 -- number of epochs to train
