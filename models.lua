@@ -1,6 +1,11 @@
 
 function createModel(mdl, vocsize, Dsize, nout, KKw)
-    	-- define model to train
+    	print(mdl)
+        print(vocsize) --10000
+        print(Dsize)   --300
+        print(nout)    --6
+        print(KKw)     --3
+        -- define model to train
     	local network = nn.Sequential()
     	local featext = nn.Sequential()
     	local classifier = nn.Sequential()
@@ -16,30 +21,36 @@ function createModel(mdl, vocsize, Dsize, nout, KKw)
     	local parallelConcat4 = nn.Concat(1)
     	local parallelConcat5 = nn.Concat(1)
 
-    	local D     = Dsize 
-    	local kW    = KKw 
-    	local dW    = 1 
+    	local D     = Dsize --300 
+    	local kW    = KKw   --3
+    	local dW    = 1      
     	local noExtra = false
     	local nhid1 = 250 
     	local nhid2 = 250 
-    	local NumFilter = D
-    	local pR = 2 
+    	local NumFilter = D --300
+    	local pR = 2 --if 1 relu if 2 tanh
     	local layers=1
 	    
     	if mdl == 'deepQueryRankingNgramSimilarityOnevsGroupMaxMinMeanLinearExDGpPoinPercpt' then
 		dofile "PaddingReshape.lua"
 		
 		deepQuery=nn.Sequential()
-   		D = Dsize 
-		local incep1max = nn.Sequential()
-		incep1max:add(nn.TemporalConvolution(D,NumFilter,1,dw))
+   		D = Dsize --300
+		----------------------------------------------------------------------  
+        -- Modeling sentence Feature extraction
+		----------------------------------------------------------------------  
+		-- Holistic Conv
+        -- MAX --
+        local incep1max = nn.Sequential()
+		incep1max:add(nn.TemporalConvolution(D,NumFilter,1,dw)) --ws = 1
 		if pR == 1 then
 			incep1max:add(nn.PReLU())
 		else 
 		  	incep1max:add(nn.Tanh())
 		end		  
 		incep1max:add(nn.Max(1))
-		incep1max:add(nn.Reshape(NumFilter,1))		  
+		incep1max:add(nn.Reshape(NumFilter,1))
+        --??
 		local incep2max = nn.Sequential()
 		incep2max:add(nn.Max(1))
 		incep2max:add(nn.Reshape(NumFilter,1))			  
@@ -47,28 +58,31 @@ function createModel(mdl, vocsize, Dsize, nout, KKw)
 		combineDepth:add(incep1max)
 		combineDepth:add(incep2max)
 		  
-		local ngram = kW                
+		local ngram = kW --3                
 		for cc = 2, ngram do
 		    local incepMax = nn.Sequential()
-		    if not noExtra then
+		    if not noExtra then --false so yes do if
 		    	incepMax:add(nn.TemporalConvolution(D,D,1,dw)) --set
+                print('incepMax:add(nn.TemporalConvolution(D,D,1,dw))')
 		    	if pR == 1 then
-				incepMax:add(nn.PReLU())
-			else 
-				incepMax:add(nn.Tanh())
-			end
+				    incepMax:add(nn.PReLU())
+			    else 
+				    incepMax:add(nn.Tanh())
+                    print("incepMax:add(nn.Tanh())")
+			    end
 		    end
 		    incepMax:add(nn.TemporalConvolution(D,NumFilter,cc,dw))
 		    if pR == 1 then
 			  	incepMax:add(nn.PReLU())
 			else 
 			  	incepMax:add(nn.Tanh())
-			end
+			end 
 		    incepMax:add(nn.Max(1))
 		    incepMax:add(nn.Reshape(NumFilter,1))		    		    
 		    combineDepth:add(incepMax)		    
 		end  		  
-		  		  
+		
+        -- MIN --
 		local incep1min = nn.Sequential()
 		incep1min:add(nn.TemporalConvolution(D,NumFilter,1,dw))
 		if pR == 1 then
@@ -104,7 +118,8 @@ function createModel(mdl, vocsize, Dsize, nout, KKw)
 		    	incepMin:add(nn.Reshape(NumFilter,1))		    		  	
 		  	combineDepth:add(incepMin)		      		    
 		end  
-		  
+		
+        -- MEAN -- 
 		local incep1mean = nn.Sequential()
 		incep1mean:add(nn.TemporalConvolution(D,NumFilter,1,dw))
 		if pR == 1 then
@@ -139,8 +154,11 @@ function createModel(mdl, vocsize, Dsize, nout, KKw)
 		    incepMean:add(nn.Reshape(NumFilter,1))			    
 		    combineDepth:add(incepMean)	
 		end  
-		  
-		local conceptFNum = 20
+        
+		----------------------------------------------------------------------  
+		-- PER Dimension Conv
+        -- MAX
+        local conceptFNum = 20
 		for cc = 1, ngram do
 			local perConcept = nn.Sequential()
 			perConcept:add(nn.PaddingReshape(2,2)) --set
@@ -154,7 +172,7 @@ function createModel(mdl, vocsize, Dsize, nout, KKw)
 			perConcept:add(nn.Transpose({1,2}))
 		    	combineDepth:add(perConcept)	
 		end
-		
+		-- MIN
 		for cc = 1, ngram do
 			local perConcept = nn.Sequential()
 		    	perConcept:add(nn.PaddingReshape(2,2)) --set
@@ -169,8 +187,12 @@ function createModel(mdl, vocsize, Dsize, nout, KKw)
 		    	combineDepth:add(perConcept)	
 		end
 		  
-		featext:add(combineDepth)		
-		local items = (ngram+1)*3  		
+		
+		----------------------------------------------------------------------  
+		-- Siamese Net
+        ----------------------------------------------------------------------  
+        featext:add(combineDepth)		
+		local items = (ngram+1)*3 -- 12 		
 		local separator = items+2*conceptFNum*ngram
 		local sepModel = 0 
 		if sepModel == 1 then  
@@ -179,10 +201,13 @@ function createModel(mdl, vocsize, Dsize, nout, KKw)
 			modelQ= featext:clone('weight','bias','gradWeight','gradBias')
 		end
 		paraQuery=nn.ParallelTable()
-		paraQuery:add(modelQ)
+		    paraQuery:add(modelQ)
           	paraQuery:add(featext)			
-          	deepQuery:add(paraQuery) 
+        deepQuery:add(paraQuery) 
 		deepQuery:add(nn.JoinTable(2)) 
+		----------------------------------------------------------------------  
+        -- Similarity Measurement
+		----------------------------------------------------------------------  
 			
 		d=nn.Concat(1) 
 		for i=1,items do

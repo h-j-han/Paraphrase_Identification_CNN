@@ -40,8 +40,9 @@ Training script for semantic relatedness prediction on the SICK dataset.
   -l,--layers (default 1)          Number of layers (ignored for Tree-LSTM)
   -d,--dim    (default 150)        LSTM memory dimension
   -b,--batch  (default 1)          Batch size
+  -e,--epoch (default 35)         how many epoch to train
   -t,--task   (default vid)       TaskD vid2 for msrvid2 and quo for QUORA msp for MSRP
-  -r,--thread (default 4)          number of torch.setnumthreads( )
+  -r,--thread (default 1)          number of torch.setnumthreads( )
   -o,--option (default train)      train or test or dev option
   -x,--loadDir (default modelSTS.trained.th)  Loaded model for testing
   -f,--testf (default test)        choose test folder test_1 test_2 test_3 test_4
@@ -66,8 +67,11 @@ elseif args.task == 'quo' then
   data_dir = 'data/quora/' 
 elseif args.task =='msp' then
   data_dir='data/msrp/'
+elseif args.task =='sic' then
+  data_dir='data/sick/'
 else 
-  print('f\n')
+  print('wrong task name')
+  assert()
 end
 
 local vocab = similarityMeasure.Vocab(data_dir .. 'vocab-cased.txt')
@@ -118,7 +122,7 @@ local model = model_class{
 }
 
 -- number of epochs to train
-local num_epochs = 35
+local num_epochs = args.epoch
 
 -- print information
 header('model configuration')
@@ -217,6 +221,7 @@ elseif args.option=='dev' then
 
 else
   print('Wrong option input')
+  assert()
 end
 
 
