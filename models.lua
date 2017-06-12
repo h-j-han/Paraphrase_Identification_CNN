@@ -215,7 +215,10 @@ function createModel(mdl, vocsize, Dsize, nout, KKw)
 		----------------------------------------------------------------------  
 		local coad = 0 -- count add d = count  d:add
 		d=nn.Concat(1) 
+		----------------------------------------------------------------------  
+        -- Algorithm 2 Group A Comparison Unit 1 (output 302)
 		for i=1,items do
+            -- MAX
   			if i <= items/3 then 					
 	  			for j=1,items/3 do
 	  				local connection = nn.Sequential()
@@ -253,6 +256,7 @@ function createModel(mdl, vocsize, Dsize, nout, KKw)
 					d:add(connection)
 		            coad = coad + 1
 				end
+            -- MIN
             elseif i <= 2*items/3 then				
                 for j=1+items/3, 2*items/3 do
                     local connection = nn.Sequential()
@@ -290,6 +294,7 @@ function createModel(mdl, vocsize, Dsize, nout, KKw)
                     d:add(connection)						
 		            coad = coad + 1
                 end
+            -- MEAN
             else 
                 for j=1+2*items/3, items do
                     local connection = nn.Sequential()
@@ -331,6 +336,7 @@ function createModel(mdl, vocsize, Dsize, nout, KKw)
 		end
         --print('d:added ' .. coad) 48 = 12 * 4
 		----------------------------------------------------------------------  
+        -- Algorithm 1 Group A Comparison Unit 2 (output 2)
 				  				
         for i=1,NumFilter do
             for j=1,3 do 
@@ -374,11 +380,12 @@ function createModel(mdl, vocsize, Dsize, nout, KKw)
 		        coad = coad + 1
             end
         end			
-	
         -- print('d:added ' .. coad) 900=300*3
-		----------------------------------------------------------------------  
 
-        for i=items+1,separator do --120 times
+		----------------------------------------------------------------------  
+        -- Algorithm 2 Group B Comparison Unit 1 (output 302)
+
+        for i=items+1,separator do --120 times 13~132 : Group B output
             local connection = nn.Sequential()
             local minus=nn.Concat(2)
             local c1=nn.Sequential()
