@@ -31,7 +31,7 @@ function createModel(mdl, vocsize, Dsize, nout, KKw)
     	local pR = 2 --if 1 relu if 2 tanh
     	local layers=1
 	    
-    	if mdl == 'deepQueryRankingNgramSimilarityOnevsGroupMaxMinMeanLinearExDGpPoinPercpt' then
+    if mdl == 'deepQueryRankingNgramSimilarityOnevsGroupMaxMinMeanLinearExDGpPoinPercpt' then
 		dofile "PaddingReshape.lua"
 		
 		deepQuery=nn.Sequential()
@@ -63,12 +63,12 @@ function createModel(mdl, vocsize, Dsize, nout, KKw)
 		    local incepMax = nn.Sequential()
 		    if not noExtra then --false so yes do if
 		    	incepMax:add(nn.TemporalConvolution(D,D,1,dw)) --set
-                print('incepMax:add(nn.TemporalConvolution(D,D,1,dw))')
+                --print('incepMax:add(nn.TemporalConvolution(D,D,1,dw))')
 		    	if pR == 1 then
 				    incepMax:add(nn.PReLU())
 			    else 
 				    incepMax:add(nn.Tanh())
-                    print("incepMax:add(nn.Tanh())")
+                    --print("incepMax:add(nn.Tanh())")
 			    end
 		    end
 		    incepMax:add(nn.TemporalConvolution(D,NumFilter,cc,dw))
@@ -79,7 +79,8 @@ function createModel(mdl, vocsize, Dsize, nout, KKw)
 			end 
 		    incepMax:add(nn.Max(1))
 		    incepMax:add(nn.Reshape(NumFilter,1))		    		    
-		    combineDepth:add(incepMax)		    
+		    
+            combineDepth:add(incepMax)		    
 		end  		  
 		
         -- MIN --
@@ -100,23 +101,24 @@ function createModel(mdl, vocsize, Dsize, nout, KKw)
 		  
 		for cc = 2, ngram do		    
 			local incepMin = nn.Sequential()
-		    	if not noExtra then
-				incepMin:add(nn.TemporalConvolution(D,D,1,dw)) --set
-				if pR == 1 then
-					incepMin:add(nn.PReLU())
-				else 
-					incepMin:add(nn.Tanh())
-				end
-		    	end		  
-		    	incepMin:add(nn.TemporalConvolution(D,NumFilter,cc,dw))
-		    	if pR == 1 then
-			  	incepMin:add(nn.PReLU())
-			else 
-			  	incepMin:add(nn.Tanh())
-			end
-		    	incepMin:add(nn.Min(1))
-		    	incepMin:add(nn.Reshape(NumFilter,1))		    		  	
-		  	combineDepth:add(incepMin)		      		    
+            if not noExtra then
+            incepMin:add(nn.TemporalConvolution(D,D,1,dw)) --set
+                if pR == 1 then
+                    incepMin:add(nn.PReLU())
+                else 
+                    incepMin:add(nn.Tanh())
+                end
+            end		  
+            incepMin:add(nn.TemporalConvolution(D,NumFilter,cc,dw))
+            if pR == 1 then
+                incepMin:add(nn.PReLU())
+            else 
+                incepMin:add(nn.Tanh())
+            end
+            incepMin:add(nn.Min(1))
+            incepMin:add(nn.Reshape(NumFilter,1))		    		  	
+		  	
+            combineDepth:add(incepMin)		      		    
 		end  
 		
         -- MEAN -- 
@@ -139,10 +141,10 @@ function createModel(mdl, vocsize, Dsize, nout, KKw)
 		    if not noExtra then
 		    	incepMean:add(nn.TemporalConvolution(D,D,1,dw)) --set
 		    	if pR == 1 then
-				incepMean:add(nn.PReLU())
-			else 
-				incepMean:add(nn.Tanh())
-			end
+				    incepMean:add(nn.PReLU())
+			    else 
+				    incepMean:add(nn.Tanh())
+			    end
 		    end
 		    incepMean:add(nn.TemporalConvolution(D,NumFilter,cc,dw))
 		    if pR == 1 then
@@ -152,7 +154,8 @@ function createModel(mdl, vocsize, Dsize, nout, KKw)
 		    end
 		    incepMean:add(nn.Mean(1))
 		    incepMean:add(nn.Reshape(NumFilter,1))			    
-		    combineDepth:add(incepMean)	
+		    
+            combineDepth:add(incepMean)	
 		end  
         
 		----------------------------------------------------------------------  
@@ -162,29 +165,31 @@ function createModel(mdl, vocsize, Dsize, nout, KKw)
 		for cc = 1, ngram do
 			local perConcept = nn.Sequential()
 			perConcept:add(nn.PaddingReshape(2,2)) --set
-		    	perConcept:add(nn.SpatialConvolutionMM(1,conceptFNum,1,cc)) --set
-		    	perConcept:add(nn.Max(2)) --set
-		    	if pR == 1 then
+		    perConcept:add(nn.SpatialConvolutionMM(1,conceptFNum,1,cc)) --set
+		    perConcept:add(nn.Max(2)) --set
+		    if pR == 1 then
 			 	perConcept:add(nn.PReLU())
 			else 
 			 	perConcept:add(nn.Tanh())
 			end
 			perConcept:add(nn.Transpose({1,2}))
-		    	combineDepth:add(perConcept)	
+		    
+            combineDepth:add(perConcept)	
 		end
 		-- MIN
 		for cc = 1, ngram do
 			local perConcept = nn.Sequential()
-		    	perConcept:add(nn.PaddingReshape(2,2)) --set
-		    	perConcept:add(nn.SpatialConvolutionMM(1,conceptFNum,1,cc)) --set
-		    	perConcept:add(nn.Min(2)) --set
-		    	if pR == 1 then
-			 	perConcept:add(nn.PReLU())
-			else 
-			 	perConcept:add(nn.Tanh())
-			end
+            perConcept:add(nn.PaddingReshape(2,2)) --set
+            perConcept:add(nn.SpatialConvolutionMM(1,conceptFNum,1,cc)) --set
+            perConcept:add(nn.Min(2)) --set
+            if pR == 1 then
+                perConcept:add(nn.PReLU())
+            else 
+                perConcept:add(nn.Tanh())
+            end
 			perConcept:add(nn.Transpose({1,2}))
-		    	combineDepth:add(perConcept)	
+		    
+            combineDepth:add(perConcept)	
 		end
 		  
 		
@@ -193,7 +198,7 @@ function createModel(mdl, vocsize, Dsize, nout, KKw)
         ----------------------------------------------------------------------  
         featext:add(combineDepth)		
 		local items = (ngram+1)*3 -- 12 		
-		local separator = items+2*conceptFNum*ngram
+		local separator = items+2*conceptFNum*ngram -- 12 + 2*20*3 = 120 + 12 = 132
 		local sepModel = 0 
 		if sepModel == 1 then  
 			modelQ= featext:clone()
@@ -208,7 +213,7 @@ function createModel(mdl, vocsize, Dsize, nout, KKw)
 		----------------------------------------------------------------------  
         -- Similarity Measurement
 		----------------------------------------------------------------------  
-			
+		local coad = 0 -- count add d = count  d:add
 		d=nn.Concat(1) 
 		for i=1,items do
   			if i <= items/3 then 					
@@ -246,162 +251,175 @@ function createModel(mdl, vocsize, Dsize, nout, KKw)
 					similarityC:add(s3)
 					connection:add(similarityC) -- scalar											
 					d:add(connection)
-					end
-				elseif i <= 2*items/3 then				
-					for j=1+items/3, 2*items/3 do
-						local connection = nn.Sequential()
-						local minus=nn.Concat(2)
-						local c1=nn.Sequential()
-						local c2=nn.Sequential()
-						c1:add(nn.Select(2,i)) -- == NumFilter, not NumFilter*1
-						c1:add(nn.Reshape(NumFilter,1)) --NumFilter*1 here
-						c2:add(nn.Select(2,separator+j))
-						c2:add(nn.Reshape(NumFilter,1))
-						minus:add(c1)
-						minus:add(c2)
-						connection:add(minus) -- D*2						
-						local similarityC=nn.Concat(1) -- multi similarity criteria			
-						local s1=nn.Sequential()
-						s1:add(nn.SplitTable(2))
-						s1:add(nn.PairwiseDistance(2)) -- scalar
-						local s2=nn.Sequential()			
-						if 1 < 3 then
-							s2:add(nn.SplitTable(2))
-						else
-							s2:add(nn.Transpose({1,2})) -- D*2 -> 2*D
-							s2:add(nn.SoftMax())
-							s2:add(nn.SplitTable(1))										
-						end									
-						s2:add(nn.CsDis()) -- scalar						
-						local s3=nn.Sequential()
-						s3:add(nn.SplitTable(2))
-						s3:add(nn.CSubTable()) -- linear
-						s3:add(nn.Abs()) -- linear						
-						similarityC:add(s1)
-						similarityC:add(s2)					
-						similarityC:add(s3)
-						connection:add(similarityC) -- scalar												
-						d:add(connection)						
-					end
-				else 
-					for j=1+2*items/3, items do
-						local connection = nn.Sequential()
-						local minus=nn.Concat(2)
-						local c1=nn.Sequential()
-						local c2=nn.Sequential()
-						c1:add(nn.Select(2,i)) -- == D, not D*1
-						c1:add(nn.Reshape(NumFilter,1)) --D*1 here
-						c2:add(nn.Select(2,separator+j))
-						c2:add(nn.Reshape(NumFilter,1))
-						minus:add(c1)
-						minus:add(c2)
-						connection:add(minus) -- D*2						
-						local similarityC=nn.Concat(1) -- multi similarity criteria			
-						local s1=nn.Sequential()
-						s1:add(nn.SplitTable(2))
-						s1:add(nn.PairwiseDistance(2)) -- scalar
-						local s2=nn.Sequential()					
-						if 1 < 3 then
-							s2:add(nn.SplitTable(2))
-						else
-							s2:add(nn.Transpose({1,2})) -- D*2 -> 2*D
-							s2:add(nn.SoftMax())
-							s2:add(nn.SplitTable(1))										
-						end							
-						s2:add(nn.CsDis()) -- scalar
-						local s3=nn.Sequential()
-						s3:add(nn.SplitTable(2))
-						s3:add(nn.CSubTable()) -- linear
-						s3:add(nn.Abs()) -- linear						
-						similarityC:add(s1)
-						similarityC:add(s2)					
-						similarityC:add(s3)					
-						connection:add(similarityC) -- scalar											
-						d:add(connection)						
-					end		
+		            coad = coad + 1
 				end
-			end	
-				  				
-			for i=1,NumFilter do
-				for j=1,3 do 
-					local connection = nn.Sequential()
-					connection:add(nn.Select(1,i)) -- == 2items
-					connection:add(nn.Reshape(2*separator,1)) --2items*1 here					
-					local minus=nn.Concat(2)
-					local c1=nn.Sequential()
-					local c2=nn.Sequential()
-					if j == 1 then 
-						c1:add(nn.Narrow(1,1,ngram+1)) -- first half (items/3)*1
-						c2:add(nn.Narrow(1,separator+1,ngram+1)) -- first half (items/3)*1
-					elseif j == 2 then
-						c1:add(nn.Narrow(1,ngram+2,ngram+1)) -- 
-						c2:add(nn.Narrow(1,separator+ngram+2,ngram+1)) 
-					else
-						c1:add(nn.Narrow(1,2*(ngram+1)+1,ngram+1)) 
-						c2:add(nn.Narrow(1,separator+2*(ngram+1)+1,ngram+1)) --each is ngram+1 portion (max or min or mean)
-					end						
-					
-					minus:add(c1)
-					minus:add(c2)
-					connection:add(minus) -- (items/3)*2					
-					local similarityC=nn.Concat(1) 	
-					local s1=nn.Sequential()
-					s1:add(nn.SplitTable(2))
-					s1:add(nn.PairwiseDistance(2)) -- scalar
-					local s2=nn.Sequential()					
-					if 1 >= 2 then
-						s2:add(nn.Transpose({1,2})) -- (items/3)*2 -> 2*(items/3)
-						s2:add(nn.SoftMax()) --for softmax have to do transpose from (item/3)*2 -> 2*(item/3)
-						s2:add(nn.SplitTable(1)) --softmax only works on row						
-					else 																				
-						s2:add(nn.SplitTable(2)) --(items/3)*2
-					end
-					s2:add(nn.CsDis()) -- scalar
-					similarityC:add(s1)
-					similarityC:add(s2)					
-					connection:add(similarityC) -- scalar											
-					d:add(connection)				
-				end
-			end			
-			
-			for i=items+1,separator do
-	  			local connection = nn.Sequential()
-				local minus=nn.Concat(2)
-				local c1=nn.Sequential()
-				local c2=nn.Sequential()
-				c1:add(nn.Select(2,i)) -- == D, not D*1
-				c1:add(nn.Reshape(NumFilter,1)) --D*1 here
-				c2:add(nn.Select(2,separator+i))
-				c2:add(nn.Reshape(NumFilter,1))
-				minus:add(c1)
-				minus:add(c2)
-				connection:add(minus) -- D*2						
-				local similarityC=nn.Concat(1) 			
-				local s1=nn.Sequential()
-				s1:add(nn.SplitTable(2))
-				s1:add(nn.PairwiseDistance(2)) -- scalar
-				local s2=nn.Sequential()					
-				if 1 < 3 then
-					s2:add(nn.SplitTable(2))
-				else
-					s2:add(nn.Transpose({1,2})) 
-					s2:add(nn.SoftMax())
-					s2:add(nn.SplitTable(1))										
-				end							
-				s2:add(nn.CsDis()) -- scalar
-				local s3=nn.Sequential()
-				s3:add(nn.SplitTable(2))
-				s3:add(nn.CSubTable()) -- linear
-				s3:add(nn.Abs()) -- linear						
-				similarityC:add(s1)
-				similarityC:add(s2)					
-				similarityC:add(s3)					
-				connection:add(similarityC) -- scalar											
-				d:add(connection)		
-			end
-	  	
-			deepQuery:add(d)	    
-			return deepQuery	
+            elseif i <= 2*items/3 then				
+                for j=1+items/3, 2*items/3 do
+                    local connection = nn.Sequential()
+                    local minus=nn.Concat(2)
+                    local c1=nn.Sequential()
+                    local c2=nn.Sequential()
+                    c1:add(nn.Select(2,i)) -- == NumFilter, not NumFilter*1
+                    c1:add(nn.Reshape(NumFilter,1)) --NumFilter*1 here
+                    c2:add(nn.Select(2,separator+j))
+                    c2:add(nn.Reshape(NumFilter,1))
+                    minus:add(c1)
+                    minus:add(c2)
+                    connection:add(minus) -- D*2						
+                    local similarityC=nn.Concat(1) -- multi similarity criteria			
+                    local s1=nn.Sequential()
+                    s1:add(nn.SplitTable(2))
+                    s1:add(nn.PairwiseDistance(2)) -- scalar
+                    local s2=nn.Sequential()			
+                    if 1 < 3 then
+                        s2:add(nn.SplitTable(2))
+                    else
+                        s2:add(nn.Transpose({1,2})) -- D*2 -> 2*D
+                        s2:add(nn.SoftMax())
+                        s2:add(nn.SplitTable(1))										
+                    end									
+                    s2:add(nn.CsDis()) -- scalar						
+                    local s3=nn.Sequential()
+                    s3:add(nn.SplitTable(2))
+                    s3:add(nn.CSubTable()) -- linear
+                    s3:add(nn.Abs()) -- linear						
+                    similarityC:add(s1)
+                    similarityC:add(s2)					
+                    similarityC:add(s3)
+                    connection:add(similarityC) -- scalar												
+                    d:add(connection)						
+		            coad = coad + 1
+                end
+            else 
+                for j=1+2*items/3, items do
+                    local connection = nn.Sequential()
+                    local minus=nn.Concat(2)
+                    local c1=nn.Sequential()
+                    local c2=nn.Sequential()
+                    c1:add(nn.Select(2,i)) -- == D, not D*1
+                    c1:add(nn.Reshape(NumFilter,1)) --D*1 here
+                    c2:add(nn.Select(2,separator+j))
+                    c2:add(nn.Reshape(NumFilter,1))
+                    minus:add(c1)
+                    minus:add(c2)
+                    connection:add(minus) -- D*2						
+                    local similarityC=nn.Concat(1) -- multi similarity criteria			
+                    local s1=nn.Sequential()
+                    s1:add(nn.SplitTable(2))
+                    s1:add(nn.PairwiseDistance(2)) -- scalar
+                    local s2=nn.Sequential()					
+                    if 1 < 3 then
+                        s2:add(nn.SplitTable(2))
+                    else
+                        s2:add(nn.Transpose({1,2})) -- D*2 -> 2*D
+                        s2:add(nn.SoftMax())
+                        s2:add(nn.SplitTable(1))										
+                    end							
+                    s2:add(nn.CsDis()) -- scalar
+                    local s3=nn.Sequential()
+                    s3:add(nn.SplitTable(2))
+                    s3:add(nn.CSubTable()) -- linear
+                    s3:add(nn.Abs()) -- linear						
+                    similarityC:add(s1)
+                    similarityC:add(s2)					
+                    similarityC:add(s3)					
+                    connection:add(similarityC) -- scalar											
+                    d:add(connection)						
+		            coad = coad + 1
+                end		
+            end
 		end
+        --print('d:added ' .. coad) 48 = 12 * 4
+		----------------------------------------------------------------------  
+				  				
+        for i=1,NumFilter do
+            for j=1,3 do 
+                local connection = nn.Sequential()
+                connection:add(nn.Select(1,i)) -- == 2items
+                connection:add(nn.Reshape(2*separator,1)) --2items*1 here					
+                local minus=nn.Concat(2)
+                local c1=nn.Sequential()
+                local c2=nn.Sequential()
+                if j == 1 then 
+                    c1:add(nn.Narrow(1,1,ngram+1)) -- first half (items/3)*1
+                    c2:add(nn.Narrow(1,separator+1,ngram+1)) -- first half (items/3)*1
+                elseif j == 2 then
+                    c1:add(nn.Narrow(1,ngram+2,ngram+1)) -- 
+                    c2:add(nn.Narrow(1,separator+ngram+2,ngram+1)) 
+                else
+                    c1:add(nn.Narrow(1,2*(ngram+1)+1,ngram+1)) 
+                    c2:add(nn.Narrow(1,separator+2*(ngram+1)+1,ngram+1)) --each is ngram+1 portion (max or min or mean)
+                end						
+                
+                minus:add(c1)
+                minus:add(c2)
+                connection:add(minus) -- (items/3)*2					
+                local similarityC=nn.Concat(1) 	
+                local s1=nn.Sequential()
+                s1:add(nn.SplitTable(2))
+                s1:add(nn.PairwiseDistance(2)) -- scalar
+                local s2=nn.Sequential()					
+                if 1 >= 2 then
+                    s2:add(nn.Transpose({1,2})) -- (items/3)*2 -> 2*(items/3)
+                    s2:add(nn.SoftMax()) --for softmax have to do transpose from (item/3)*2 -> 2*(item/3)
+                    s2:add(nn.SplitTable(1)) --softmax only works on row
+                else
+                    s2:add(nn.SplitTable(2)) --(items/3)*2
+                end
+                s2:add(nn.CsDis()) -- scalar
+                similarityC:add(s1)
+                similarityC:add(s2)					
+                connection:add(similarityC) -- scalar											
+                d:add(connection)				
+		        coad = coad + 1
+            end
+        end			
+	
+        -- print('d:added ' .. coad) 900=300*3
+		----------------------------------------------------------------------  
+
+        for i=items+1,separator do --120 times
+            local connection = nn.Sequential()
+            local minus=nn.Concat(2)
+            local c1=nn.Sequential()
+            local c2=nn.Sequential()
+            c1:add(nn.Select(2,i)) -- == D, not D*1
+            c1:add(nn.Reshape(NumFilter,1)) --D*1 here
+            c2:add(nn.Select(2,separator+i))
+            c2:add(nn.Reshape(NumFilter,1))
+            minus:add(c1)
+            minus:add(c2)
+            connection:add(minus) -- D*2						
+            local similarityC=nn.Concat(1) 			
+            local s1=nn.Sequential()
+            s1:add(nn.SplitTable(2))
+            s1:add(nn.PairwiseDistance(2)) -- scalar
+            local s2=nn.Sequential()					
+            if 1 < 3 then
+                s2:add(nn.SplitTable(2))
+            else
+                s2:add(nn.Transpose({1,2})) 
+                s2:add(nn.SoftMax())
+                s2:add(nn.SplitTable(1))										
+            end							
+            s2:add(nn.CsDis()) -- scalar
+            local s3=nn.Sequential()
+            s3:add(nn.SplitTable(2))
+            s3:add(nn.CSubTable()) -- linear
+            s3:add(nn.Abs()) -- linear						
+            similarityC:add(s1)
+            similarityC:add(s2)					
+            similarityC:add(s3)					
+            connection:add(similarityC) -- scalar											
+            d:add(connection)		
+		    coad = coad + 1
+        end
+	  	
+        --print('d:added ' .. coad)
+		----------------------------------------------------------------------  
+        
+        deepQuery:add(d)	    
+        return deepQuery	
+	end
 end
 
