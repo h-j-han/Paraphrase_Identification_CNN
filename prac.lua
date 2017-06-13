@@ -174,7 +174,7 @@ if args.option=='train' then
       --save model
       print('saving...')
       local start = sys.clock()
-      model:save(string.format('./model/%s.model.epoch%d.devscore%0.3f',taskD,i,dev_score))
+      model:save(string.format('./model/%s.model.epoch%d.devscore%0.3f.%s',taskD,i,dev_score,args.modelf))
       print('finished saving in ' .. (sys.clock() - start))
     end
   end
