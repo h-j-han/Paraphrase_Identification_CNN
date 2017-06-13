@@ -57,8 +57,7 @@ function Conv:__init(config)
     dofile 'models_re2a.lua'
   elseif self.modelf == 're2aoa' then --dkmax + more conv
     dofile 'models_re2aoa.lua'
-  elseif self.modelf == 'kmax' then --dkmax + fc layer
-    dofile 'models_kmax.lua'
+<<<<<<< HEAD
   elseif self.modelf == 're1aop' then --dkmax + more conv
     dofile 'models_re1aop.lua'
   elseif self.modelf == 're1aoap' then --dkmax + more conv
@@ -67,6 +66,10 @@ function Conv:__init(config)
     dofile 'models_re2aoap.lua'
   elseif self.modelf == 're2aop' then --dkmax + more conv
     dofile 'models_re2aop.lua'
+=======
+  elseif self.modelf == 'kmax' then --dkmax + fc layer
+    dofile 'models_kmax.lua'
+>>>>>>> 94bbd424ce7d82bf78500893775c70434d4723ac
   else
       error("select models.lua file for create model")
   end
