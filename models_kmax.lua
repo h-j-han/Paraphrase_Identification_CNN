@@ -70,7 +70,7 @@ function createModel(mdl, vocsize, Dsize, nout, KKw)
 		combineDepth:add(incep2max)
 		
 		local ngram = kW --3                
-		for cc = 2, ngram do
+		for cc = 2, ngram-1 do
 		    local incepMax = nn.Sequential()
 		    if not noExtra then --false so yes do if
 		    	incepMax:add(nn.TemporalConvolution(D,D,1,dw)) --set
@@ -96,7 +96,29 @@ function createModel(mdl, vocsize, Dsize, nout, KKw)
             incepMax:add(nn.Reshape(NumFilter,1))
 
             combineDepth:add(incepMax)		    
-		end  		  
+		end  
+        cc=ngram
+        local incepMax = nn.Sequential()
+        if not noExtra then --false so yes do if
+            incepMax:add(nn.TemporalConvolution(D,D,1,dw)) --set
+            --print('incepMax:add(nn.TemporalConvolution(D,D,1,dw))')
+            if pR == 1 then
+                incepMax:add(nn.PReLU())
+            else 
+                incepMax:add(nn.Tanh())
+                --print("incepMax:add(nn.Tanh())")
+            end
+        end
+        incepMax:add(nn.TemporalConvolution(D,NumFilter,cc,dw))
+        if pR == 1 then
+            incepMax:add(nn.PReLU())
+        else 
+            incepMax:add(nn.Tanh())
+        end 
+        incepMax:add(nn.Max(1))
+        incepMax:add(nn.Reshape(NumFilter,1))                       
+        
+        combineDepth:add(incepMax)  		  
 		
         -- MIN --
 		local incep1min = nn.Sequential()
@@ -177,7 +199,7 @@ function createModel(mdl, vocsize, Dsize, nout, KKw)
 		-- PER Dimension Conv
         -- MAX
         local conceptFNum = 20
-		for cc = 1, ngram do
+		for cc = 1, ngram-1 do
 			local perConcept = nn.Sequential()
 			perConcept:add(nn.PaddingReshape(2,2)) --set
 		    perConcept:add(nn.SpatialConvolutionMM(1,conceptFNum,1,cc)) --set 
@@ -196,6 +218,19 @@ function createModel(mdl, vocsize, Dsize, nout, KKw)
 		    
             combineDepth:add(perConcept)	
 		end
+        cc=ngram
+        local perConcept = nn.Sequential()
+        perConcept:add(nn.PaddingReshape(2,2)) --set
+        perConcept:add(nn.SpatialConvolutionMM(1,conceptFNum,1,cc)) --set
+        perConcept:add(nn.Max(2)) --set
+        if pR == 1 then
+            perConcept:add(nn.PReLU())
+        else 
+            perConcept:add(nn.Tanh())
+        end
+        perConcept:add(nn.Transpose({1,2}))
+        
+        combineDepth:add(perConcept)
 		-- MIN
 		for cc = 1, ngram do
 			local perConcept = nn.Sequential()
