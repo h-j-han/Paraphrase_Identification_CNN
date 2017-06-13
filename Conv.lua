@@ -122,7 +122,7 @@ function Conv:trainCombineOnly(dataset)
     	    xlua.progress(i, dataset.size)
     end
 
-    local batch_size = math.min(i + self.batch_size - 1, dataset.size) - i + 1
+    local batch_size = 1--math.min(i + self.batch_size - 1, dataset.size) - i + 1
     -- get target distributions for batch
     local targets = torch.zeros(batch_size, self.num_classes)
     for j = 1, batch_size do
