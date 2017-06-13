@@ -5,7 +5,7 @@ require('optim')
 require('xlua')
 require('sys')
 require('lfs')
-
+dofile('TemporalDynamicKMinPooling.lua')
 similarityMeasure = {}
 
 include('util/read_data.lua')
@@ -147,7 +147,7 @@ print("Id: " .. id)
 if args.option=='train' then
   header('Training model')
   local train_start = sys.clock()
-  local best_dev_score = -1.0
+  local best_dev_score = 0.9
   local best_dev_model = model
 
   print('loading datasets')

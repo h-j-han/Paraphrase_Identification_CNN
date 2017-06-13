@@ -10,7 +10,7 @@ function Conv:__init(config)
   self.sim_nhidden   = config.sim_nhidden   or 150
   self.task          = config.task          or 'sic'  -- or 'vid'
   self.modelf        = config.modelf        or 'orig'  -- or 'vid'
-	
+	--dofile('TemporalDynamicKMinPooling.lua')
   -- word embedding
   self.emb_vecs = config.emb_vecs
   self.emb_dim = config.emb_vecs:size(2)
@@ -67,6 +67,8 @@ function Conv:__init(config)
     dofile 'models_re2aoap.lua'
   elseif self.modelf == 're2aop' then --dkmax + more conv
     dofile 'models_re2aop.lua'
+  elseif self.modelf == 're1aoa_2' then --dkmax + more conv
+    dofile 'models_re1aoa_2.lua'
   else
       error("select models.lua file for create model")
   end
