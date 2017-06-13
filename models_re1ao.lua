@@ -2,6 +2,7 @@
 function createModel(mdl, vocsize, Dsize, nout, KKw)
     	print(" THIS IS MODEL from model_re1ao.lua")
     	print(" Dynamic K Max pooling(modified) and activation order changed on per dim part ")
+        print(" small changes are made on KMaxpool on Holistic ws=1 and per-dim ws=1,2")
         print(mdl)
         print(vocsize) --10000
         print(Dsize)   --300
@@ -59,9 +60,9 @@ function createModel(mdl, vocsize, Dsize, nout, KKw)
         --incep1max:add(nn.View())
 		
         --1
-        incep1max:add(nn.TemporalDynamicKMaxPooling(kma))
+        incep1max:add(nn.TemporalDynamicKMaxPooling(3))
         incep1max:add(nn.PaddingReshape(2,2))   
-        incep1max:add(nn.SpatialConvolutionMM(1,1,1,kmac))        
+        incep1max:add(nn.SpatialConvolutionMM(1,1,1,2))        
         incep1max:add(nn.Max(2))  
         incep1max:add(nn.View())
         incep1max:add(nn.Reshape(NumFilter,1))
@@ -245,9 +246,9 @@ function createModel(mdl, vocsize, Dsize, nout, KKw)
 			 	perConcept:add(nn.Tanh())
 			end
             --1-
-            perConcept:add(nn.TemporalDynamicKMaxPooling(kma))
+            perConcept:add(nn.TemporalDynamicKMaxPooling(3))
             --perConcept:add(nn.PaddingReshape(2,2))   
-            perConcept:add(nn.SpatialConvolutionMM(1,conceptFNum,1,kmac)) --set
+            perConcept:add(nn.SpatialConvolutionMM(1,conceptFNum,1,cc)) --set
             --perConcept:add(nn.SpatialConvolutionMM(1,1,1,3))        
             perConcept:add(nn.Max(2))  
             
