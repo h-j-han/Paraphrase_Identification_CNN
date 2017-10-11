@@ -1,6 +1,7 @@
 
 function createModel(mdl, vocsize, Dsize, nout, KKw)
-    	print(mdl)
+    	print(" THIS IS MODEL from model_re.lua")
+        print(mdl)
         print(vocsize) --10000
         print(Dsize)   --300
         print(nout)    --6
@@ -42,7 +43,11 @@ function createModel(mdl, vocsize, Dsize, nout, KKw)
 		-- Holistic Conv
         -- MAX --
         local incep1max = nn.Sequential()
-		incep1max:add(nn.TemporalConvolution(D,NumFilter,1,dw)) --ws = 1
+		
+        incep1max:add(nn.TemporalConvolution(D,D,1,dw)) --set
+		incep1max:add(nn.Tanh())
+		
+        incep1max:add(nn.TemporalConvolution(D,NumFilter,1,dw)) --ws = 1
 		if pR == 1 then
 			incep1max:add(nn.PReLU())
 		else 
@@ -85,6 +90,8 @@ function createModel(mdl, vocsize, Dsize, nout, KKw)
 		
         -- MIN --
 		local incep1min = nn.Sequential()
+        incep1min:add(nn.TemporalConvolution(D,D,1,dw)) --set
+		incep1min:add(nn.Tanh())
 		incep1min:add(nn.TemporalConvolution(D,NumFilter,1,dw))
 		if pR == 1 then
 			incep1min:add(nn.PReLU())
@@ -123,6 +130,8 @@ function createModel(mdl, vocsize, Dsize, nout, KKw)
 		
         -- MEAN -- 
 		local incep1mean = nn.Sequential()
+        incep1mean:add(nn.TemporalConvolution(D,D,1,dw)) --set
+		incep1mean:add(nn.Tanh())
 		incep1mean:add(nn.TemporalConvolution(D,NumFilter,1,dw))
 		if pR == 1 then
 			incep1mean:add(nn.PReLU())
@@ -165,6 +174,7 @@ function createModel(mdl, vocsize, Dsize, nout, KKw)
 		for cc = 1, ngram do
 			local perConcept = nn.Sequential()
 			perConcept:add(nn.PaddingReshape(2,2)) --set
+		    perConcept:add(nn.SpatialConvolutionMM(1,1,1,1)) --set
 		    perConcept:add(nn.SpatialConvolutionMM(1,conceptFNum,1,cc)) --set
 		    perConcept:add(nn.Max(2)) --set
 		    if pR == 1 then
@@ -180,6 +190,7 @@ function createModel(mdl, vocsize, Dsize, nout, KKw)
 		for cc = 1, ngram do
 			local perConcept = nn.Sequential()
             perConcept:add(nn.PaddingReshape(2,2)) --set
+		    perConcept:add(nn.SpatialConvolutionMM(1,1,1,1)) --set
             perConcept:add(nn.SpatialConvolutionMM(1,conceptFNum,1,cc)) --set
             perConcept:add(nn.Min(2)) --set
             if pR == 1 then

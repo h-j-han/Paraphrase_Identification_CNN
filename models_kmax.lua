@@ -1,36 +1,36 @@
 
 function createModel(mdl, vocsize, Dsize, nout, KKw)
-    	print(mdl)
-        print(vocsize) --10000
-        print(Dsize)   --300
-        print(nout)    --6
-        print(KKw)     --3
-        -- define model to train
-    	local network = nn.Sequential()
-    	local featext = nn.Sequential()
-    	local classifier = nn.Sequential()
+	print(mdl)
+    print(vocsize) --10000
+    print(Dsize)   --300
+    print(nout)    --6
+    print(KKw)     --3
+    -- define model to train
+	local network = nn.Sequential()
+	local featext = nn.Sequential()
+	local classifier = nn.Sequential()
 
-    	local conCon1 = nn.Sequential()
-    	local conCon2 = nn.Sequential()
-    	local conCon3 = nn.Sequential()
-    	local conCon4 = nn.Sequential()
+	local conCon1 = nn.Sequential()
+	local conCon2 = nn.Sequential()
+	local conCon3 = nn.Sequential()
+	local conCon4 = nn.Sequential()
 
-    	local parallelConcat1 = nn.Concat(1)
-    	local parallelConcat2 = nn.Concat(1)
-    	local parallelConcat3 = nn.Concat(1)
-    	local parallelConcat4 = nn.Concat(1)
-    	local parallelConcat5 = nn.Concat(1)
+	local parallelConcat1 = nn.Concat(1)
+	local parallelConcat2 = nn.Concat(1)
+	local parallelConcat3 = nn.Concat(1)
+	local parallelConcat4 = nn.Concat(1)
+	local parallelConcat5 = nn.Concat(1)
 
-    	local D     = Dsize --300 
-    	local kW    = KKw   --3
-    	local dW    = 1      
-    	local noExtra = false
-    	local nhid1 = 250 
-    	local nhid2 = 250 
-    	local NumFilter = D --300
-    	local pR = 2 --if 1 relu if 2 tanh
-    	local layers=1
-	    
+	local D     = Dsize --300 
+	local kW    = KKw   --3
+	local dW    = 1      
+	local noExtra = false
+	local nhid1 = 250 
+	local nhid2 = 250 
+	local NumFilter = D --300
+	local pR = 2 --if 1 relu if 2 tanh
+	local layers=1
+    local k_pool=2
     if mdl == 'deepQueryRankingNgramSimilarityOnevsGroupMaxMinMeanLinearExDGpPoinPercpt' then
 		dofile "PaddingReshape.lua"
 		
@@ -48,18 +48,29 @@ function createModel(mdl, vocsize, Dsize, nout, KKw)
 		else 
 		  	incep1max:add(nn.Tanh())
 		end		  
-		incep1max:add(nn.Max(1))
-		incep1max:add(nn.Reshape(NumFilter,1))
+		--incep1max:add(nn.Max(1))
+		--incep1max:add(nn.Reshape(NumFilter,1))
+        incep1max:add(nn.TemporalDynamicKMaxPooling(k_pool))
+        incep1max:add(nn.Reshape(NumFilter*k_pool))
+        incep1max:add(nn.Linear(NumFilter*k_pool,NumFilter))
+        --incep1max:add(nn.Tanh())
+        incep1max:add(nn.Reshape(NumFilter,1))
         --??
 		local incep2max = nn.Sequential()
 		incep2max:add(nn.Max(1))
-		incep2max:add(nn.Reshape(NumFilter,1))			  
+		incep2max:add(nn.Reshape(NumFilter,1))	
+        --[[incep2max:add(nn.TemporalDynamicKMaxPooling(k_pool))
+        incep2max:add(nn.Reshape(NumFilter*k_pool))
+        incep2max:add(nn.Linear(NumFilter*k_pool,NumFilter))
+        incep2max:add(nn.Tanh())
+        incep2max:add(nn.Reshape(NumFilter,1))]]
+
 		local combineDepth = nn.Concat(2)
 		combineDepth:add(incep1max)
 		combineDepth:add(incep2max)
-		  
+		
 		local ngram = kW --3                
-		for cc = 2, ngram do
+		for cc = 2, ngram-1 do
 		    local incepMax = nn.Sequential()
 		    if not noExtra then --false so yes do if
 		    	incepMax:add(nn.TemporalConvolution(D,D,1,dw)) --set
@@ -77,11 +88,37 @@ function createModel(mdl, vocsize, Dsize, nout, KKw)
 			else 
 			  	incepMax:add(nn.Tanh())
 			end 
-		    incepMax:add(nn.Max(1))
-		    incepMax:add(nn.Reshape(NumFilter,1))		    		    
-		    
+		    --incepMax:add(nn.Max(1))
+		    --incepMax:add(nn.Reshape(NumFilter,1))		    		    
+		    incepMax:add(nn.TemporalDynamicKMaxPooling(k_pool))
+            incepMax:add(nn.Reshape(NumFilter*k_pool))
+            incepMax:add(nn.Linear(NumFilter*k_pool,NumFilter))
+            incepMax:add(nn.Reshape(NumFilter,1))
+
             combineDepth:add(incepMax)		    
-		end  		  
+		end  
+        cc=ngram
+        local incepMax = nn.Sequential()
+        if not noExtra then --false so yes do if
+            incepMax:add(nn.TemporalConvolution(D,D,1,dw)) --set
+            --print('incepMax:add(nn.TemporalConvolution(D,D,1,dw))')
+            if pR == 1 then
+                incepMax:add(nn.PReLU())
+            else 
+                incepMax:add(nn.Tanh())
+                --print("incepMax:add(nn.Tanh())")
+            end
+        end
+        incepMax:add(nn.TemporalConvolution(D,NumFilter,cc,dw))
+        if pR == 1 then
+            incepMax:add(nn.PReLU())
+        else 
+            incepMax:add(nn.Tanh())
+        end 
+        incepMax:add(nn.Max(1))
+        incepMax:add(nn.Reshape(NumFilter,1))                       
+        
+        combineDepth:add(incepMax)  		  
 		
         -- MIN --
 		local incep1min = nn.Sequential()
@@ -157,16 +194,21 @@ function createModel(mdl, vocsize, Dsize, nout, KKw)
 		    
             combineDepth:add(incepMean)	
 		end  
-        
+        print('Done Block A')
 		----------------------------------------------------------------------  
 		-- PER Dimension Conv
         -- MAX
         local conceptFNum = 20
-		for cc = 1, ngram do
+		for cc = 1, ngram-1 do
 			local perConcept = nn.Sequential()
 			perConcept:add(nn.PaddingReshape(2,2)) --set
-		    perConcept:add(nn.SpatialConvolutionMM(1,conceptFNum,1,cc)) --set
-		    perConcept:add(nn.Max(2)) --set
+		    perConcept:add(nn.SpatialConvolutionMM(1,conceptFNum,1,cc)) --set 
+		    --perConcept:add(nn.Max(2)) --set
+
+            perConcept:add(nn.TemporalDynamicKMaxPooling(k_pool)) --set
+            perConcept:add(nn.Reshape(conceptFNum*k_pool*D))
+            perConcept:add(nn.Linear(conceptFNum*k_pool*D,conceptFNum*D))
+            perConcept:add(nn.Reshape(conceptFNum,D))
 		    if pR == 1 then
 			 	perConcept:add(nn.PReLU())
 			else 
@@ -176,11 +218,24 @@ function createModel(mdl, vocsize, Dsize, nout, KKw)
 		    
             combineDepth:add(perConcept)	
 		end
+        cc=ngram
+        local perConcept = nn.Sequential()
+        perConcept:add(nn.PaddingReshape(2,2)) --set
+        perConcept:add(nn.SpatialConvolutionMM(1,conceptFNum,1,cc)) --set
+        perConcept:add(nn.Max(2)) --set
+        if pR == 1 then
+            perConcept:add(nn.PReLU())
+        else 
+            perConcept:add(nn.Tanh())
+        end
+        perConcept:add(nn.Transpose({1,2}))
+        
+        combineDepth:add(perConcept)
 		-- MIN
 		for cc = 1, ngram do
 			local perConcept = nn.Sequential()
             perConcept:add(nn.PaddingReshape(2,2)) --set
-            perConcept:add(nn.SpatialConvolutionMM(1,conceptFNum,1,cc)) --set
+            perConcept:add(nn.SpatialConvolutionMM(1,conceptFNum,1,cc)) --set 20 12 300
             perConcept:add(nn.Min(2)) --set
             if pR == 1 then
                 perConcept:add(nn.PReLU())
@@ -192,7 +247,7 @@ function createModel(mdl, vocsize, Dsize, nout, KKw)
             combineDepth:add(perConcept)	
 		end
 		  
-		
+		print('Done Block B')
 		----------------------------------------------------------------------  
 		-- Siamese Net
         ----------------------------------------------------------------------  

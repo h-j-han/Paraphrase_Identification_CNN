@@ -10,7 +10,7 @@ function Conv:__init(config)
   self.sim_nhidden   = config.sim_nhidden   or 150
   self.task          = config.task          or 'sic'  -- or 'vid'
   self.modelf        = config.modelf        or 'orig'  -- or 'vid'
-	--dofile('TemporalDynamicKMinPooling.lua')
+	
   -- word embedding
   self.emb_vecs = config.emb_vecs
   self.emb_dim = config.emb_vecs:size(2)
@@ -57,8 +57,7 @@ function Conv:__init(config)
     dofile 'models_re2a.lua'
   elseif self.modelf == 're2aoa' then --dkmax + more conv
     dofile 'models_re2aoa.lua'
-  elseif self.modelf == 'kmax' then --dkmax + fc layer
-    dofile 'models_kmax.lua'
+<<<<<<< HEAD
   elseif self.modelf == 're1aop' then --dkmax + more conv
     dofile 'models_re1aop.lua'
   elseif self.modelf == 're1aoap' then --dkmax + more conv
@@ -67,22 +66,10 @@ function Conv:__init(config)
     dofile 'models_re2aoap.lua'
   elseif self.modelf == 're2aop' then --dkmax + more conv
     dofile 'models_re2aop.lua'
-  elseif self.modelf == 're1aoa_2' then --dkmax + more conv
-    dofile 'models_re1aoa_2.lua'
-  elseif self.modelf == 're1ao_2' then --dkmax + more conv
-    dofile 'models_re1ao_2.lua'
-  elseif self.modelf == 're2ao_2' then --dkmax + more conv
-    dofile 'models_re2ao_2.lua'
-  elseif self.modelf == 're2aoa_2' then --dkmax + more conv
-    dofile 'models_re2aoa_2.lua'
-  elseif self.modelf == 're1ao_3' then --dkmax + more conv
-    dofile 'models_re1ao_3.lua'
-  elseif self.modelf == 're1aoa_3' then --dkmax + more conv
-    dofile 'models_re1aoa_3.lua'
-  elseif self.modelf == 're2aoa_3' then --dkmax + more conv
-    dofile 'models_re2aoa_3.lua'
-  elseif self.modelf == 're2ao_3' then --dkmax + more conv
-    dofile 'models_re2ao_3.lua'
+=======
+  elseif self.modelf == 'kmax' then --dkmax + fc layer
+    dofile 'models_kmax.lua'
+>>>>>>> 94bbd424ce7d82bf78500893775c70434d4723ac
   else
       error("select models.lua file for create model")
   end
@@ -136,7 +123,7 @@ function Conv:trainCombineOnly(dataset)
     	    xlua.progress(i, dataset.size)
     end
 
-    local batch_size = 1--math.min(i + self.batch_size - 1, dataset.size) - i + 1
+    local batch_size = math.min(i + self.batch_size - 1, dataset.size) - i + 1
     -- get target distributions for batch
     local targets = torch.zeros(batch_size, self.num_classes)
     for j = 1, batch_size do

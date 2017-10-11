@@ -5,7 +5,7 @@ require('optim')
 require('xlua')
 require('sys')
 require('lfs')
-
+dofile('TemporalDynamicKMinPooling.lua')
 similarityMeasure = {}
 
 include('util/read_data.lua')
@@ -40,11 +40,13 @@ Training script for semantic relatedness prediction on the SICK dataset.
   -l,--layers (default 1)          Number of layers (ignored for Tree-LSTM)
   -d,--dim    (default 150)        LSTM memory dimension
   -b,--batch  (default 1)          Batch size
+  -e,--epoch (default 35)         how many epoch to train
   -t,--task   (default vid)       TaskD vid2 for msrvid2 and quo for QUORA msp for MSRP
-  -r,--thread (default 4)          number of torch.setnumthreads( )
+  -r,--thread (default 1)          number of torch.setnumthreads( )
   -o,--option (default train)      train or test or dev option
   -x,--loadDir (default modelSTS.trained.th)  Loaded model for testing
   -f,--testf (default test)        choose test folder test_1 test_2 test_3 test_4
+  -y,--modelf (default orig) choose models.lua file : 'orig' or  variation models_re.lua : 're'
 ]]
 -- layers : 1
 -- model : "dependency:
@@ -66,8 +68,11 @@ elseif args.task == 'quo' then
   data_dir = 'data/quora/' 
 elseif args.task =='msp' then
   data_dir='data/msrp/'
+elseif args.task =='sic' then
+  data_dir='data/sick/'
 else 
-  print('f\n')
+  print('wrong task name')
+  assert()
 end
 
 local vocab = similarityMeasure.Vocab(data_dir .. 'vocab-cased.txt')
@@ -114,11 +119,13 @@ local model = model_class{
   mem_dim    = args.dim,
   num_layers = args.layers,
   task       = taskD,
-  batch_size = args.batch
+  batch_size = args.batch,
+  modelf     = args.modelf
+  
 }
 
 -- number of epochs to train
-local num_epochs = 35
+local num_epochs = args.epoch
 
 -- print information
 header('model configuration')
@@ -140,7 +147,7 @@ print("Id: " .. id)
 if args.option=='train' then
   header('Training model')
   local train_start = sys.clock()
-  local best_dev_score = -1.0
+  local best_dev_score = 0.908
   local best_dev_model = model
 
   print('loading datasets')
@@ -167,7 +174,7 @@ if args.option=='train' then
       --save model
       print('saving...')
       local start = sys.clock()
-      model:save(string.format('./model/%s.model.epoch%d.devscore%0.3f',taskD,i,dev_score))
+      model:save(string.format('./model/%s.model.epoch%d.devscore%0.3f.%s',taskD,i,dev_score,args.modelf))
       print('finished saving in ' .. (sys.clock() - start))
     end
   end
@@ -217,6 +224,7 @@ elseif args.option=='dev' then
 
 else
   print('Wrong option input')
+  assert()
 end
 
 
