@@ -125,8 +125,8 @@ local best_dev_score = -1.0
 local best_dev_model = model
 
 -- threads
---torch.setnumthreads(4)
---print('<torch> number of threads in used: ' .. torch.getnumthreads())
+torch.setnumthreads(4)
+print('<torch> number of threads in used: ' .. torch.getnumthreads())
 
 header('Training model')
 
