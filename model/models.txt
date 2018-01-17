@@ -1,0 +1,3 @@
+vid.model.epoch25.devscore0.910.kmaxmin     700MB
+quomodel.epoch26.devscore0.679              2.4GB
+
