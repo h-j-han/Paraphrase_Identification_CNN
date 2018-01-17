@@ -9,7 +9,7 @@ function Conv:__init(config)
   self.structure     = config.structure     or 'lstm' -- {lstm, bilstm}
   self.sim_nhidden   = config.sim_nhidden   or 150
   self.task          = config.task          or 'sic'  -- or 'vid'
-  self.modelf        = config.modelf        or 'orig'  -- or 'vid'
+  self.modelf        = config.modelf        or 'kmax'  -- or 'vid'
 	--dofile('TemporalDynamicKMinPooling.lua')
   -- word embedding
   self.emb_vecs = config.emb_vecs
@@ -37,52 +37,14 @@ function Conv:__init(config)
   
   ----------------------------------------Combination of ConvNets.
   --
-  if self.modelf == 'orig' then
-    dofile 'models.lua'
-  elseif self.modelf == 're' then -- more conv
-    dofile 'models_re.lua'
-  elseif self.modelf == 're1' then -- dkmax
-    dofile 'models_re1.lua'
-  elseif self.modelf == 're2' then --dkmax + more conv
-    dofile 'models_re2.lua'
-  elseif self.modelf == 're1ao' then --dkmax + more conv
-    dofile 'models_re1ao.lua'
-  elseif self.modelf == 're1a' then --dkmax + more conv
-    dofile 'models_re1a.lua'
-  elseif self.modelf == 're1aoa' then --dkmax + more conv
-    dofile 'models_re1aoa.lua'
-  elseif self.modelf == 're2ao' then --dkmax + more conv
-    dofile 'models_re2ao.lua'
-  elseif self.modelf == 're2a' then --dkmax + more conv
-    dofile 'models_re2a.lua'
-  elseif self.modelf == 're2aoa' then --dkmax + more conv
-    dofile 'models_re2aoa.lua'
-  elseif self.modelf == 'kmax' then --dkmax + fc layer
+  if self.modelf == 'kmax' then
     dofile 'models_kmax.lua'
-  elseif self.modelf == 're1aop' then --dkmax + more conv
-    dofile 'models_re1aop.lua'
-  elseif self.modelf == 're1aoap' then --dkmax + more conv
-    dofile 'models_re1aoap.lua'
-  elseif self.modelf == 're2aoap' then --dkmax + more conv
-    dofile 'models_re2aoap.lua'
-  elseif self.modelf == 're2aop' then --dkmax + more conv
-    dofile 'models_re2aop.lua'
-  elseif self.modelf == 're1aoa_2' then --dkmax + more conv
-    dofile 'models_re1aoa_2.lua'
-  elseif self.modelf == 're1ao_2' then --dkmax + more conv
-    dofile 'models_re1ao_2.lua'
-  elseif self.modelf == 're2ao_2' then --dkmax + more conv
-    dofile 'models_re2ao_2.lua'
-  elseif self.modelf == 're2aoa_2' then --dkmax + more conv
-    dofile 'models_re2aoa_2.lua'
-  elseif self.modelf == 're1ao_3' then --dkmax + more conv
-    dofile 'models_re1ao_3.lua'
-  elseif self.modelf == 're1aoa_3' then --dkmax + more conv
-    dofile 'models_re1aoa_3.lua'
-  elseif self.modelf == 're2aoa_3' then --dkmax + more conv
-    dofile 'models_re2aoa_3.lua'
-  elseif self.modelf == 're2ao_3' then --dkmax + more conv
-    dofile 'models_re2ao_3.lua'
+  elseif self.modelf == 'kmax2' then -- more conv
+    dofile 'models_kmax2.lua'
+  elseif self.modelf == 'kmaxmin' then -- dkmax
+    dofile 'models_kmaxmin.lua'
+  elseif self.modelf == 'kmaxmin2' then --dkmax + more conv
+    dofile 'models_kmaxmin2.lua'
   else
       error("select models.lua file for create model")
   end
