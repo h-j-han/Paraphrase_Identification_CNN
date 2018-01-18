@@ -27,6 +27,7 @@ We designed 4 different models, those are the following:
 Results
 -------------
 We are presenting the result of our works based on the MSRVID dataset.
+
 | Models  | Model_orig | Model_kmax | Model_kmax2 | Model_kmaxmin| Model_kmaxmin2|
 | ------------- | ------------- | ------------- | ------------- | ------------- | ------------- |
 | Test score | 0.9075  | 0.9100 | 0.9088 | 0.9105 | 0.9097|
